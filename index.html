@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<!-- saved from url=(0031)https://text-disk-ui.pages.dev/ -->
+<html lang="zh"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>文本云盘管理器</title>
+<style>
+:root{
+--primary:#2563eb;--primary-hover:#1d4ed8;--danger:#dc2626;--danger-hover:#b91c1c;
+--success:#16a34a;--bg:#f8fafc;--card-bg:#ffffff;--text:#0f172a;--text-secondary:#64748b;
+--border:#e2e8f0;--sidebar-width:300px;--header-height:64px;
+--shadow-sm:0 1px 2px 0 rgba(0,0,0,0.05);
+--shadow:0 1px 3px 0 rgba(0,0,0,0.1),0 1px 2px -1px rgba(0,0,0,0.1);
+--shadow-lg:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1);
+--radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;height:100vh;overflow:hidden;}
+
+/* ===== TOP NAV ===== */
+#top-nav{position:fixed;top:0;left:0;right:0;height:var(--header-height);background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:100;box-shadow:var(--shadow-sm);}
+#nav-left{display:flex;align-items:center;gap:16px;}
+#menu-toggle{width:40px;height:40px;border:none;background:transparent;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:all .2s;}
+#menu-toggle:hover{background:#f1f5f9;}
+#menu-toggle span{display:block;width:20px;height:2px;background:#475569;border-radius:2px;transition:all .3s;}
+#menu-toggle.active span:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+#menu-toggle.active span:nth-child(2){opacity:0;}
+#menu-toggle.active span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
+#nav-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.025em;}
+#nav-right{display:flex;align-items:center;gap:8px;}
+.nav-btn{padding:8px;border:none;background:transparent;color:var(--text-secondary);font-size:14px;font-weight:500;cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:6px;transition:all .2s;text-decoration:none;}
+.nav-btn:hover{background:#f1f5f9;color:var(--text);}
+.nav-btn.youtube:hover{background:#fef2f2;color:#dc2626;}
+.nav-btn.telegram:hover{background:#e0f2fe;color:#0284c7;}
+.nav-btn.logout{border:1px solid var(--border);background:#fff;}
+.nav-btn.logout:hover{background:#fef2f2;color:var(--danger);border-color:#fecaca;}
+
+/* ===== LAYOUT ===== */
+#main-container{display:flex;height:100vh;padding-top:var(--header-height);}
+#sidebar{width:var(--sidebar-width);min-width:var(--sidebar-width);background:var(--card-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:all .3s cubic-bezier(.4,0,.2,1);overflow:hidden;position:relative;z-index:50;}
+#sidebar.collapsed{width:0;min-width:0;border-right:none;}
+#sidebar-header{padding:12px 12px 10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+#sidebar-title-row{display:flex;justify-content:space-between;align-items:center;}
+#sidebar-title{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.btn-group{display:flex;gap:6px;}
+.btn-icon{padding:6px 10px;font-size:12px;background:var(--success);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;transition:all .2s;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+.btn-icon:hover{background:#15803d;transform:translateY(-1px);}
+.btn-icon.secondary{background:#f1f5f9;color:var(--text);border:1px solid var(--border);}
+.btn-icon.secondary:hover{background:#e2e8f0;transform:translateY(-1px);}
+
+/* ===== SEARCH ===== */
+#tree-search-wrap{position:relative;}
+#tree-search{width:100%;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#f8fafc;color:var(--text);transition:all .2s;}
+#tree-search:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+#tree-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:#94a3b8;pointer-events:none;}
+#tree-search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;border:none;background:transparent;color:#94a3b8;cursor:pointer;font-size:14px;display:none;align-items:center;justify-content:center;border-radius:50%;padding:0;}
+#tree-search-clear:hover{background:#e2e8f0;color:var(--text);}
+
+/* ===== FILE TREE ===== */
+#file-tree-container{flex:1;overflow-y:auto;padding:8px;user-select:none;}
+.tree-list{list-style:none;}
+.tree-list.root-level{padding:0;}
+.tree-list.nested{padding-left:16px;margin-top:4px;}
+.tree-node{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:all .15s;border:1.5px solid transparent;position:relative;}
+.tree-node:hover{background:#f8fafc;border-color:#e2e8f0;}
+.folder-item.active>.tree-node,.file-item.active>.tree-node{background:#eff6ff;border-color:#bfdbfe;color:var(--primary);}
+.caret{font-size:10px;color:#94a3b8;width:16px;text-align:center;transition:transform .2s;display:inline-block;flex-shrink:0;}
+.caret.expanded{transform:rotate(90deg);}
+.indent{width:16px;display:inline-block;flex-shrink:0;}
+.node-icon{font-size:16px;line-height:1;flex-shrink:0;}
+.node-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;color:inherit;}
+
+/* ===== ⋯ CONTEXT MENU BUTTON (fixes hover-only on touch) ===== */
+.node-menu-btn{width:28px;height:28px;border:none;background:transparent;color:#94a3b8;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s;flex-shrink:0;opacity:0;padding:0;line-height:1;}
+.tree-node:hover .node-menu-btn,
+.file-item.active>.tree-node .node-menu-btn,
+.folder-item.active>.tree-node .node-menu-btn{opacity:1;}
+.node-menu-btn:hover{background:#dbeafe;color:var(--primary);}
+
+/* touch devices: always show the menu button */
+@media (hover: none) {
+  .node-menu-btn{opacity:1;}
+}
+
+/* ===== CONTEXT MENU ===== */
+#ctx-menu{position:fixed;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow-lg);z-index:300;min-width:160px;padding:6px;display:none;}
+#ctx-menu.open{display:block;}
+.ctx-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);transition:all .15s;white-space:nowrap;}
+.ctx-item:hover{background:#f1f5f9;}
+.ctx-item.danger{color:var(--danger);}
+.ctx-item.danger:hover{background:#fef2f2;}
+.ctx-divider{height:1px;background:var(--border);margin:4px 0;}
+
+/* ===== FOLDER EMPTY STATE ===== */
+.folder-empty-hint{font-size:12px;color:#cbd5e1;padding:4px 10px 6px 26px;font-style:italic;}
+
+/* ===== SIDEBAR BACKDROP ===== */
+#sidebar-backdrop{display:none;position:fixed;top:var(--header-height);left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:40;backdrop-filter:blur(4px);}
+#sidebar-backdrop.active{display:block;}
+
+/* ===== CONTENT AREA ===== */
+#content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);position:relative;}
+#editor-container{flex:1;display:flex;flex-direction:column;padding:24px;overflow-y:auto;gap:16px;}
+#unsaved-bar{display:none;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 16px;font-size:13px;color:#92400e;align-items:center;gap:8px;flex-shrink:0;}
+#unsaved-bar.show{display:flex;}
+#breadcrumb{display:flex;align-items:center;gap:8px;padding:0 0 8px 0;font-size:14px;color:var(--text-secondary);border-bottom:1px solid var(--border);margin-bottom:0;overflow-x:auto;white-space:nowrap;flex-shrink:0;}
+#breadcrumb .crumb-item{display:flex;align-items:center;gap:8px;}
+#breadcrumb .crumb-item:not(:last-child)::after{content:'/';color:#cbd5e1;}
+#breadcrumb .crumb-root{cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .2s;}
+#breadcrumb .crumb-root:hover{background:#f1f5f9;color:var(--primary);}
+#breadcrumb .crumb-current{color:var(--text);font-weight:600;}
+
+/* ===== TOOLBAR ===== */
+.toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card-bg);padding:12px 16px;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-sm);flex-shrink:0;}
+.btn-primary{padding:10px 20px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(37,99,235,.2);}
+.btn-primary:hover{background:var(--primary-hover);transform:translateY(-1px);}
+.btn-primary:active{transform:scale(.98);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+#status{font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;min-width:80px;}
+#status.ok{color:var(--success);}
+#status.err{color:var(--danger);}
+#status.saving{color:var(--text-secondary);}
+
+/* ===== FONT SIZE CONTROLS ===== */
+.font-size-ctrl{display:flex;align-items:center;gap:4px;margin-left:auto;}
+.font-size-ctrl label{font-size:13px;color:var(--text-secondary);}
+.font-size-btn{width:28px;height:28px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.font-size-btn:hover{background:#f1f5f9;}
+#font-size-val{font-size:13px;font-weight:600;min-width:30px;text-align:center;color:var(--text);}
+#current-file{color:var(--text-secondary);font-size:13px;font-weight:500;padding:6px 12px;background:#f1f5f9;border-radius:20px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ===== EDITOR ===== */
+#editor-wrap{flex:1;position:relative;min-height:200px;}
+#editor{width:100%;height:100%;border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;line-height:1.7;resize:none;outline:none;transition:all .2s;background:var(--card-bg);color:var(--text);}
+#editor:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+#editor:disabled{background:#f8fafc;color:var(--text-secondary);cursor:not-allowed;}
+#editor::placeholder{color:#94a3b8;}
+#editor-loading{position:absolute;inset:0;background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--text-secondary);font-size:14px;}
+#editor-loading.show{display:flex;}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ===== WORD COUNT ===== */
+#word-count{font-size:12px;color:var(--text-secondary);text-align:right;flex-shrink:0;}
+
+/* ===== EMPTY STATE ===== */
+#empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px;text-align:center;color:var(--text-secondary);}
+#empty-state .empty-icon{font-size:48px;margin-bottom:8px;}
+#empty-state h3{font-size:18px;font-weight:600;color:var(--text);}
+#empty-state p{font-size:14px;max-width:300px;line-height:1.6;}
+#empty-state .empty-cta{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+/* ===== SHARE PANEL ===== */
+#share-panel{background:var(--card-bg);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;flex-shrink:0;}
+#share-panel-header{font-size:14px;font-weight:700;color:var(--text);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s;gap:8px;}
+#share-panel-header:hover{background:#f8fafc;}
+#share-panel-header-left{display:flex;align-items:center;gap:8px;}
+#share-panel-caret{font-size:11px;color:#94a3b8;transition:transform .2s;}
+#share-panel-caret.open{transform:rotate(90deg);}
+#share-panel-body{padding:16px 20px 20px;border-top:1px solid var(--border);display:none;}
+#share-panel-body.open{display:block;}
+.input-group{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.input-group input{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:'SFMono-Regular',monospace;outline:none;transition:all .2s;background:#f8fafc;}
+.input-group input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+#token-note{font-size:12px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5;}
+#share-link-box{display:none;margin-top:16px;padding:16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-sm);}
+#share-url{width:100%;padding:10px 12px;border:1.5px solid #86efac;border-radius:var(--radius-sm);font-family:'SFMono-Regular',monospace;font-size:13px;background:#fff;color:#166534;margin-top:8px;cursor:pointer;transition:all .2s;}
+#share-url:focus{outline:none;border-color:#4ade80;}
+.copy-flash{animation:flashGreen .4s ease-out;}
+@keyframes flashGreen{0%{background:#dcfce7;border-color:#4ade80;}100%{background:#fff;border-color:#86efac;}}
+#qr-container{margin-top:16px;display:flex;justify-content:center;padding:16px;background:#fff;border-radius:var(--radius-sm);border:1px solid var(--border);}
+
+/* ===== TOAST ===== */
+#toast-container{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;}
+.toast{background:#1e293b;color:#fff;padding:10px 20px;border-radius:24px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-lg);animation:toastIn .25s ease-out;pointer-events:auto;max-width:400px;}
+.toast.success{background:#166534;}
+.toast.error{background:#991b1b;}
+.toast.warning{background:#92400e;}
+.toast-undo{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;padding:4px 10px;border-radius:12px;font-size:12px;cursor:pointer;transition:all .15s;}
+.toast-undo:hover{background:rgba(255,255,255,.2);}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== AUTOSAVE INDICATOR ===== */
+#autosave-status{font-size:12px;color:#94a3b8;text-align:right;min-height:16px;flex-shrink:0;}
+
+/* ===== MODALS ===== */
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(4px);}
+.modal.active{display:flex;}
+.modal-card{background:var(--card-bg);border-radius:var(--radius);width:100%;max-width:420px;box-shadow:var(--shadow-lg);border:1px solid var(--border);overflow:hidden;animation:modalSlide .2s ease-out;}
+@keyframes modalSlide{from{opacity:0;transform:translateY(-20px) scale(.95);}to{opacity:1;transform:translateY(0) scale(1);}}
+.modal-header{padding:24px 24px 0;}
+.modal-header h3{font-size:18px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:10px;}
+.modal-body{padding:24px;}
+.form-group{margin-bottom:20px;}
+.form-group:last-child{margin-bottom:0;}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.form-group input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:15px;outline:none;transition:all .2s;background:#f8fafc;}
+.form-group input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.1);}
+.form-group input[readonly]{background:#f1f5f9;color:var(--text-secondary);cursor:not-allowed;}
+.modal-footer{padding:0 24px 24px;display:flex;justify-content:flex-end;gap:12px;}
+.btn{padding:10px 18px;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-secondary{background:#f1f5f9;color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{background:#e2e8f0;}
+.btn-block{width:100%;margin-top:12px;justify-content:center;}
+
+/* ===== CONFIRM DIALOG ===== */
+#confirm-modal .modal-card{max-width:380px;}
+#confirm-modal .modal-body{padding:20px 24px 8px;}
+#confirm-modal .confirm-msg{font-size:15px;color:var(--text);line-height:1.6;}
+#confirm-modal .confirm-sub{font-size:13px;color:var(--text-secondary);margin-top:6px;}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+:root{--sidebar-width:300px;}
+html{font-size:15px;}
+#top-nav{padding:0 16px;}
+#nav-title{font-size:16px;}
+#sidebar{position:fixed;top:var(--header-height);left:0;bottom:0;box-shadow:var(--shadow-lg);transform:translateX(-100%);width:var(--sidebar-width);min-width:var(--sidebar-width);}
+#sidebar.collapsed{transform:translateX(-100%);width:var(--sidebar-width);min-width:var(--sidebar-width);}
+#sidebar:not(.collapsed){transform:translateX(0);}
+#editor-container{padding:16px;}
+.toolbar{padding:10px;}
+#current-file{width:100%;order:-1;margin-left:0;}
+.font-size-ctrl{margin-left:0;}
+}
+@media(max-width:480px){
+.input-group{flex-direction:column;}
+.input-group input,.input-group .btn-primary{width:100%;}
+.tree-list.nested{padding-left:12px;}
+}
+</style>
+<script src="./文本云盘管理器_files/qrcode.min.js.下载"></script>
+</head>
+<body>
+
+<!-- ===== LOGIN OVERLAY ===== -->
+<div id="login-overlay" style="position: fixed; inset: 0px; background: linear-gradient(135deg, rgb(245, 247, 250) 0%, rgb(228, 231, 241) 100%); z-index: 9998; display: flex; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background:#fff;width:100%;max-width:420px;border-radius:16px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);padding:40px 32px;text-align:center;border:1px solid #e5e7eb;">
+    <div style="width:64px;height:64px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:28px;">🔐</div>
+    <h2 style="margin-bottom:8px;color:#111827;font-size:24px;font-weight:700;">管理员登录</h2>
+    <p style="font-size:15px;color:#6b7280;margin-bottom:32px;">请输入管理员 UUID 进行身份验证</p>
+    <div style="text-align:left;">
+      <label style="display:block;font-size:13px;color:#374151;margin-bottom:6px;font-weight:600;">Admin UUID</label>
+      <div style="position:relative;">
+        <input type="password" id="admin-uuid-input" placeholder="请输入 ADMIN_UUID" style="width:100%;padding:12px 16px 12px 44px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:15px;outline:none;background:#f9fafb;" onfocus="this.style.borderColor=&#39;#3b82f6&#39;;this.style.background=&#39;#fff&#39;;" onblur="this.style.borderColor=&#39;#e5e7eb&#39;;this.style.background=&#39;#f9fafb&#39;;" onkeypress="if(event.key===&#39;Enter&#39;)doLogin()">
+        <span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:16px;">🔑</span>
+      </div>
+    </div>
+    <div id="login-error" style="color:#dc2626;font-size:14px;margin-top:16px;padding:12px 16px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;display:none;">⚠️ UUID 验证失败，请重试</div>
+    <button onclick="doLogin()" style="width:100%;margin-top:24px;padding:14px 24px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:600;">验证登录</button>
+  </div>
+</div>
+
+<!-- ===== TOP NAV ===== -->
+<nav id="top-nav" style="display:none;">
+  <div id="nav-left">
+    <button id="menu-toggle" onclick="toggleSidebar()" title="切换文件列表"><span></span><span></span><span></span></button>
+    <div id="nav-title">文本云盘</div>
+  </div>
+  <div id="nav-right">
+    <a href="https://www.youtube.com/@%E5%A5%BD%E8%BD%AF%E6%8E%A8%E8%8D%90" target="_blank" class="nav-btn youtube" title="好软推荐">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;color:#dc2626;"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.377.504A3.016 3.016 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.504 9.376.504 9.376.504s7.505 0 9.377-.504a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12 9.545 15.568z"></path></svg>
+    </a>
+    <a href="https://github.com/ethgan/Online-Text-Edit" target="_blank" class="nav-btn" title="GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.085 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>
+    </a>
+    <a href="https://t.me/yt_hytj" target="_blank" class="nav-btn telegram" title="Telegram">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.36 8.627-.168.9-.5 1.201-.82 1.23-.697.065-1.226-.461-1.901-.904-1.056-.694-1.653-1.127-2.677-1.804-1.185-.784-.417-1.215.259-1.921.177-.184 3.248-2.977 3.307-3.23.007-.031.014-.148-.056-.21-.07-.062-.174-.04-.25-.024-.106.022-1.793 1.14-5.062 3.349-.48.33-.915.49-1.305.482-.429-.009-1.255-.243-1.87-.443-.753-.245-1.351-.374-1.299-.79.027-.218.33-.44.906-.667 3.558-1.55 5.937-2.57 7.135-3.064 3.398-1.4 4.104-1.642 4.565-1.65.101-.002.327.023.474.141.124.1.157.235.172.33.015.096.032.312.018.484z"></path></svg>
+    </a>
+    <button class="nav-btn logout" onclick="logout()" title="退出登录">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<div id="main-container" style="display:none;">
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div id="sidebar-title-row">
+        <div id="sidebar-title"><span>📁</span><span>文件管理</span></div>
+        <div class="btn-group">
+          <button class="btn-icon" onclick="showNewFileModal(&#39;&#39;)" title="新建文件">📄+</button>
+          <button class="btn-icon secondary" onclick="showNewFolderModal(&#39;&#39;)" title="新建文件夹">📁+</button>
+        </div>
+      </div>
+      <div id="tree-search-wrap">
+        <span id="tree-search-icon">🔍</span>
+        <input type="text" id="tree-search" placeholder="搜索文件…" oninput="onSearchInput(this.value)" autocomplete="off">
+        <button id="tree-search-clear" onclick="clearSearch()" title="清除">✕</button>
+      </div>
+    </div>
+    <div id="file-tree-container"><div id="tree-root"></div></div>
+  </aside>
+
+  <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+  <main id="content-area">
+    <!-- EMPTY STATE -->
+    <div id="empty-state">
+      <div class="empty-icon">📂</div>
+      <h3>选择或新建文件开始编辑</h3>
+      <p>从左侧文件列表点击文件，或点击下方按钮新建一个。</p>
+      <div class="empty-cta">
+        <button class="btn-primary" onclick="showNewFileModal(&#39;&#39;)">📄 新建文件</button>
+        <button class="btn btn-secondary" onclick="showNewFolderModal(&#39;&#39;)">📁 新建文件夹</button>
+      </div>
+    </div>
+
+    <!-- EDITOR AREA (hidden until file selected) -->
+    <div id="editor-container" style="display:none;">
+      <div id="breadcrumb"></div>
+      <div id="unsaved-bar"><span style="width:8px;height:8px;background:#f59e0b;border-radius:50%;flex-shrink:0;display:inline-block;"></span><span>文件已修改，尚未保存（Ctrl+S 快速保存）</span></div>
+
+      <div class="toolbar">
+        <button class="btn-primary" id="save-btn" onclick="save()"><span>💾</span><span>保存</span></button>
+        <span id="status"></span>
+        <div class="font-size-ctrl">
+          <label>字号</label>
+          <button class="font-size-btn" onclick="changeFontSize(-1)">−</button>
+          <span id="font-size-val">15</span>
+          <button class="font-size-btn" onclick="changeFontSize(1)">+</button>
+        </div>
+        <span id="current-file">未选择文件</span>
+      </div>
+
+      <div id="editor-wrap">
+        <textarea id="editor" disabled="" placeholder="在此输入文本内容…" style="font-size: 15px;"></textarea>
+        <div id="editor-loading"><div class="spinner"></div><span>加载中…</span></div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+        <div id="autosave-status"></div>
+        <div id="word-count">0 字 · 0 行</div>
+      </div>
+
+      <div id="share-panel">
+        <div id="share-panel-header" onclick="toggleSharePanel()">
+          <div id="share-panel-header-left"><span>🔑</span><span>分享设置</span></div>
+          <span id="share-panel-caret">▶</span>
+        </div>
+        <div id="share-panel-body">
+          <p id="token-note">Token 永久有效，可随时重新生成新 Token 替换旧链接使之失效。</p>
+          <div class="input-group">
+            <input type="text" id="customToken" placeholder="自定义 Token（留空则自动生成 UUID）">
+            <button class="btn-primary" onclick="gen()" style="white-space:nowrap;">生成 / 更新</button>
+          </div>
+          <div id="share-link-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:13px;color:#166534;font-weight:600;">✓ 分享链接已生成</div>
+              <button onclick="revokeToken()" style="font-size:12px;padding:4px 10px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:6px;cursor:pointer;">撤销</button>
+            </div>
+            <input type="text" id="share-url" readonly="" onclick="copyShareUrl(this)">
+            <div style="font-size:12px;color:#16a34a;margin-top:4px;">点击链接框即可复制</div>
+            <div id="qr-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== CONTEXT MENU ===== -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-new-file" onclick="ctxAction(&#39;new-file&#39;)">📄 新建文件</div>
+  <div class="ctx-item" id="ctx-new-folder" onclick="ctxAction(&#39;new-folder&#39;)">📁 新建子文件夹</div>
+  <div class="ctx-divider" id="ctx-div-folder"></div>
+  <div class="ctx-item" id="ctx-token" onclick="ctxAction(&#39;token&#39;)">🔗 查看分享链接</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxAction(&#39;rename&#39;)">✏️ 重命名</div>
+  <div class="ctx-item danger" onclick="ctxAction(&#39;delete&#39;)">🗑 删除</div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container"></div>
+
+<!-- ===== MODALS ===== -->
+<div id="new-file-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3>📄 新建文本文件</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>文件名</label>
+        <input type="text" id="new-filename" placeholder="如：笔记.txt" onkeypress="if(event.key===&#39;Enter&#39;)createNewFile()">
+      </div>
+      <input type="hidden" id="new-file-parent" value="">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal(&#39;new-file-modal&#39;)">取消</button>
+      <button class="btn btn-primary" onclick="createNewFile()" style="background:var(--success);">确认创建</button>
+    </div>
+  </div>
+</div>
+
+<div id="new-folder-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3>📁 新建文件夹</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>文件夹名称</label>
+        <input type="text" id="new-foldername" placeholder="如：文档" onkeypress="if(event.key===&#39;Enter&#39;)createNewFolder()">
+      </div>
+      <input type="hidden" id="new-folder-parent" value="">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal(&#39;new-folder-modal&#39;)">取消</button>
+      <button class="btn btn-primary" onclick="createNewFolder()">确认创建</button>
+    </div>
+  </div>
+</div>
+
+<div id="rename-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3>✏️ 重命名</h3></div>
+    <div class="modal-body">
+      <div class="form-group"><label>原名称</label><input type="text" id="rename-old" readonly=""></div>
+      <div class="form-group">
+        <label>新名称</label>
+        <input type="text" id="rename-new" placeholder="请输入新名称" onkeypress="if(event.key===&#39;Enter&#39;)doRename()">
+        <div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">文件夹名请以 / 结尾</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal(&#39;rename-modal&#39;)">取消</button>
+      <button class="btn btn-primary" onclick="doRename()">确认重命名</button>
+    </div>
+  </div>
+</div>
+
+<div id="view-token-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3>🔗 文件分享信息</h3></div>
+    <div class="modal-body">
+      <div id="token-file-info" style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:20px;font-size:14px;font-weight:600;color:var(--text);border:1px solid var(--border);"></div>
+      <div class="form-group"><label>Token</label><input type="text" id="view-token" readonly=""></div>
+      <div class="form-group"><label>访问链接</label><input type="text" id="view-url" readonly="" onclick="this.select()"></div>
+      <button class="btn btn-primary btn-block" onclick="copyToClipboard(&#39;view-url&#39;)">📋 复制分享链接</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal(&#39;view-token-modal&#39;)">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Custom confirm dialog (replaces native confirm()) -->
+<div id="confirm-modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header"><h3 id="confirm-title">⚠️ 确认操作</h3></div>
+    <div class="modal-body">
+      <p class="confirm-msg" id="confirm-msg"></p>
+      <p class="confirm-sub" id="confirm-sub"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="confirmResolve(false)">取消</button>
+      <button class="btn btn-primary" id="confirm-ok-btn" onclick="confirmResolve(true)" style="background:var(--danger);">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CORE CONFIG =====
+const API_BASE = window.location.origin;
+let currentFile = '', currentFolder = '', savedContent = '', isDirty = false;
+let isLoggedIn = false;
+let _currentFileToken = null;
+let autoSaveTimer = null;
+let lastSavedAt = null;
+let allFileList = []; // for search
+
+// ===== FONT SIZE =====
+let editorFontSize = parseInt(localStorage.getItem('editorFontSize') || '15');
+function applyFontSize() {
+  document.getElementById('editor').style.fontSize = editorFontSize + 'px';
+  document.getElementById('font-size-val').textContent = editorFontSize;
+}
+function changeFontSize(delta) {
+  editorFontSize = Math.min(28, Math.max(11, editorFontSize + delta));
+  localStorage.setItem('editorFontSize', editorFontSize);
+  applyFontSize();
+}
+
+// ===== TOAST =====
+function showToast(msg, type = '', undoFn = null, duration = 3000) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.innerHTML = msg;
+  if (undoFn) {
+    const ub = document.createElement('button');
+    ub.className = 'toast-undo';
+    ub.textContent = '撤销';
+    ub.onclick = () => { clearTimeout(tid); t.remove(); undoFn(); };
+    t.appendChild(ub);
+  }
+  c.appendChild(t);
+  const tid = setTimeout(() => { t.style.animation = 'none'; t.style.opacity = '0'; t.style.transition = 'opacity .2s'; setTimeout(() => t.remove(), 200); }, duration);
+}
+
+// ===== CUSTOM CONFIRM =====
+let _confirmResolve = null;
+function showConfirm(title, msg, sub = '', okLabel = '确认删除', danger = true) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  document.getElementById('confirm-sub').textContent = sub || '';
+  const okBtn = document.getElementById('confirm-ok-btn');
+  okBtn.textContent = okLabel;
+  okBtn.style.background = danger ? 'var(--danger)' : 'var(--primary)';
+  document.getElementById('confirm-modal').classList.add('active');
+  return new Promise(res => { _confirmResolve = res; });
+}
+function confirmResolve(v) {
+  document.getElementById('confirm-modal').classList.remove('active');
+  if (_confirmResolve) { _confirmResolve(v); _confirmResolve = null; }
+}
+
+// ===== WORD COUNT =====
+function updateWordCount() {
+  const v = document.getElementById('editor').value;
+  const chars = v.length;
+  const lines = v ? v.split('\n').length : 0;
+  document.getElementById('word-count').textContent = chars + ' 字 · ' + lines + ' 行';
+}
+
+// ===== AUTOSAVE =====
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  if (!currentFile || currentFile.endsWith('/')) return;
+  autoSaveTimer = setTimeout(async () => {
+    if (!isDirty) return;
+    const as = document.getElementById('autosave-status');
+    as.textContent = '自动保存中…';
+    try {
+      await saveInternal();
+      const now = new Date();
+      lastSavedAt = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      as.textContent = '上次自动保存于 ' + lastSavedAt;
+    } catch (e) {
+      as.textContent = '自动保存失败';
+    }
+  }, 3000);
+}
+
+// ===== DIRTY STATE =====
+function markDirty() {
+  isDirty = true;
+  document.getElementById('unsaved-bar').classList.add('show');
+  scheduleAutoSave();
+}
+function clearDirty() {
+  isDirty = false;
+  savedContent = document.getElementById('editor').value;
+  document.getElementById('unsaved-bar').classList.remove('show');
+  clearTimeout(autoSaveTimer);
+}
+const editor = document.getElementById('editor');
+editor.addEventListener('input', function () {
+  updateWordCount();
+  if (currentFile && !currentFile.endsWith('/') && this.value !== savedContent) markDirty();
+  else clearDirty();
+});
+
+// Fix: use e.target instead of this for Tab in arrow function context
+editor.addEventListener('keydown', function (e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = e.target.selectionStart, en = e.target.selectionEnd;
+    e.target.value = e.target.value.substring(0, s) + '  ' + e.target.value.substring(en);
+    e.target.selectionStart = e.target.selectionEnd = s + 2;
+    markDirty();
+  }
+});
+
+window.addEventListener('beforeunload', e => { if (isDirty) { e.preventDefault(); e.returnValue = ''; } });
+
+// ===== ESCAPE HELPERS =====
+function escAttr(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function isFolder(name) { return name.endsWith('/'); }
+function getParentPath(path) { const p = path.split('/').filter(Boolean); p.pop(); return p.length ? p.join('/') + '/' : ''; }
+
+// ===== TREE BUILD =====
+function buildTree(fileList) {
+  const root = { children: {}, isFolder: true, name: '' };
+  const sorted = [...fileList].sort((a, b) => a.name.split('/').length - b.name.split('/').length);
+  for (const item of sorted) {
+    const parts = item.name.split('/').filter(Boolean); let current = root;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i] + (i < parts.length - 1 || item.isFolder ? '/' : '');
+      const fullPath = parts.slice(0, i + 1).join('/') + (i < parts.length - 1 || item.isFolder ? '/' : '');
+      if (!current.children[part]) {
+        current.children[part] = { name: part, fullPath, isFolder: i < parts.length - 1 || item.isFolder, children: {}, item: i === parts.length - 1 ? item : null };
+      }
+      current = current.children[part];
+    }
+  }
+  return root;
+}
+
+function renderTree(node, level, searchTerm) {
+  level = level || 0;
+  const entries = Object.values(node.children).sort((a, b) => a.isFolder !== b.isFolder ? (a.isFolder ? -1 : 1) : a.name.localeCompare(b.name));
+
+  if (entries.length === 0 && level === 0) {
+    return '<div style="text-align:center;padding:40px 20px;color:#94a3b8;font-size:14px;"><div style="font-size:32px;margin-bottom:8px;">📂</div>暂无文件<br>点击上方"新建"创建</div>';
+  }
+
+  let html = level === 0 ? '<ul class="tree-list root-level">' : '<ul class="tree-list nested" style="display:none;">';
+  for (const entry of entries) {
+    const isActive = entry.fullPath === currentFile ? 'active' : '';
+    const ep = escAttr(entry.fullPath);
+    const parentPath = getParentPath(entry.fullPath);
+    const ep2 = escAttr(parentPath);
+    const displayName = entry.isFolder ? entry.name.replace('/', '') : entry.name;
+
+    // For search: check if name matches
+    if (searchTerm && !entry.fullPath.toLowerCase().includes(searchTerm)) {
+      if (!entry.isFolder) continue;
+    }
+
+    if (entry.isFolder) {
+      const isEmpty = Object.keys(entry.children).length === 0;
+      const emptyHint = isEmpty ? '<div class="folder-empty-hint">(空)</div>' : '';
+      const folderIcon = isEmpty ? '📂' : '📁';
+      html += `<li class="folder-item ${isActive}" data-path="${ep}" data-type="folder"
+        onclick="toggleFolder(event,'${ep}')"
+        ondragover="handleDragOver(event)"
+        ondrop="handleDrop(event,'${ep}')">
+        <div class="tree-node">
+          <span class="caret">▶</span>
+          <span class="node-icon" style="opacity:${isEmpty?'.5':'1'}">${folderIcon}</span>
+          <span class="node-name" title="${ep}">${displayName}</span>
+          <button class="node-menu-btn" onclick="openCtxMenu(event,'${ep}','folder')" title="操作">⋯</button>
+        </div>
+        ${emptyHint}
+        ${renderTree(entry, level + 1, searchTerm)}
+      </li>`;
+    } else {
+      html += `<li class="file-item ${isActive}" data-path="${ep}" data-folder="${ep2}" data-type="file"
+        onclick="selectFile('${ep}','${ep2}',event)"
+        draggable="true"
+        ondragstart="handleDragStart(event,'${ep}')"
+        ondragover="handleDragOver(event)"
+        ondrop="handleDrop(event,'${ep2}')">
+        <div class="tree-node">
+          <span class="indent"></span>
+          <span class="node-icon">📄</span>
+          <span class="node-name" title="${ep}">${displayName}</span>
+          <button class="node-menu-btn" onclick="openCtxMenu(event,'${ep}','file')" title="操作">⋯</button>
+        </div>
+      </li>`;
+    }
+  }
+  return html + '</ul>';
+}
+
+// ===== CONTEXT MENU =====
+let ctxTarget = null, ctxType = null;
+function openCtxMenu(e, path, type) {
+  e.stopPropagation();
+  ctxTarget = path; ctxType = type;
+  const menu = document.getElementById('ctx-menu');
+  // Show/hide folder-only items
+  const isFolderType = type === 'folder';
+  document.getElementById('ctx-new-file').style.display = isFolderType ? 'flex' : 'none';
+  document.getElementById('ctx-new-folder').style.display = isFolderType ? 'flex' : 'none';
+  document.getElementById('ctx-div-folder').style.display = isFolderType ? 'block' : 'none';
+  document.getElementById('ctx-token').style.display = isFolderType ? 'none' : 'flex';
+
+  menu.classList.add('open');
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let x = e.clientX + 4, y = e.clientY + 4;
+  menu.style.left = '0px'; menu.style.top = '0px';
+  const mw = menu.offsetWidth || 160, mh = menu.offsetHeight || 180;
+  if (x + mw > vw) x = vw - mw - 8;
+  if (y + mh > vh) y = vh - mh - 8;
+  menu.style.left = x + 'px'; menu.style.top = y + 'px';
+}
+function ctxAction(action) {
+  document.getElementById('ctx-menu').classList.remove('open');
+  if (!ctxTarget) return;
+  if (action === 'new-file') showNewFileModal(ctxTarget);
+  else if (action === 'new-folder') showNewFolderModal(ctxTarget);
+  else if (action === 'token') showViewTokenModal(ctxTarget);
+  else if (action === 'rename') showRenameModal(ctxTarget);
+  else if (action === 'delete') deleteFile(ctxTarget);
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#ctx-menu') && !e.target.closest('.node-menu-btn')) {
+    document.getElementById('ctx-menu').classList.remove('open');
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('ctx-menu').classList.remove('open'); });
+
+// ===== SEARCH =====
+function onSearchInput(val) {
+  const v = val.trim().toLowerCase();
+  document.getElementById('tree-search-clear').style.display = v ? 'flex' : 'none';
+  const tree = buildTree(allFileList);
+  document.getElementById('tree-root').innerHTML = renderTree(tree, 0, v || null);
+  if (v) {
+    // expand all when searching
+    document.querySelectorAll('.tree-list.nested').forEach(ul => ul.style.display = 'block');
+    document.querySelectorAll('.caret').forEach(c => c.classList.add('expanded'));
+  } else {
+    restoreTreeState();
+  }
+}
+function clearSearch() {
+  document.getElementById('tree-search').value = '';
+  document.getElementById('tree-search-clear').style.display = 'none';
+  onSearchInput('');
+}
+
+// ===== BREADCRUMB =====
+function renderBreadcrumb(path) {
+  let html = '<div class="crumb-item"><span class="crumb-root" onclick="navigateToPath(\'\')">根目录</span></div>';
+  if (path) {
+    const parts = path.split('/').filter(p => p);
+    for (let i = 0; i < parts.length; i++) {
+      const pathAcc = parts.slice(0, i + 1).join('/') + '/';
+      const isLast = i === parts.length - 1;
+      const epa = escAttr(pathAcc);
+      html += isLast
+        ? `<div class="crumb-item"><span class="crumb-current">${parts[i]}</span></div>`
+        : `<div class="crumb-item"><span class="crumb-root" onclick="navigateToPath('${epa}')">${parts[i]}</span></div>`;
+    }
+  }
+  return html;
+}
+
+// ===== SIDEBAR TOGGLE =====
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar'), backdrop = document.getElementById('sidebar-backdrop'), toggle = document.getElementById('menu-toggle');
+  if (window.innerWidth <= 768) {
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    sidebar.classList.toggle('collapsed');
+    backdrop.classList.toggle('active', isCollapsed);
+    toggle.classList.toggle('active', isCollapsed);
+  } else {
+    sidebar.classList.toggle('collapsed');
+    toggle.classList.toggle('active');
+  }
+}
+
+// ===== MODALS =====
+function showModal(id) { document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+
+// ===== FOLDER TOGGLE =====
+function toggleFolder(e, p) {
+  e.stopPropagation();
+  const li = e.currentTarget;
+  const ul = li.querySelector(':scope > ul.nested');
+  const c = li.querySelector(':scope > .tree-node .caret');
+  if (ul) {
+    const vis = ul.style.display !== 'none';
+    ul.style.display = vis ? 'none' : 'block';
+    c && c.classList.toggle('expanded', !vis);
+  }
+  currentFolder = p;
+}
+
+// ===== FILE SELECT =====
+async function selectFile(fp, fpd, e) {
+  e.stopPropagation();
+  if (fp === currentFile) return;
+  if (!confirmLeave()) return;
+
+  currentFile = fp; currentFolder = fpd;
+  document.querySelectorAll('.file-item,.folder-item').forEach(i => i.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.getElementById('current-file').textContent = '当前：' + fp.split('/').pop();
+
+  // Reset share panel
+  _currentFileToken = null;
+  document.getElementById('customToken').value = '';
+  document.getElementById('share-link-box').style.display = 'none';
+  document.getElementById('qr-container').innerHTML = '';
+  document.getElementById('autosave-status').textContent = '';
+
+  // Show editor area
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('editor-container').style.display = 'flex';
+  document.getElementById('breadcrumb').innerHTML = renderBreadcrumb(fpd);
+
+  // Show loading state — disable editor while fetching
+  const ed = document.getElementById('editor');
+  ed.disabled = true;
+  ed.value = '';
+  document.getElementById('editor-loading').classList.add('show');
+  updateWordCount();
+
+  try {
+    const [contentRes] = await Promise.all([
+      fetch(`${API_BASE}/admin?action=get_content&file=${encodeURIComponent(fp)}`),
+      fetch(`${API_BASE}/admin`, { method: 'POST', body: 'GET_TOKEN|' + fp })
+        .then(r => r.text()).then(t => { if (t && t !== '该文件未生成Token') _currentFileToken = t; })
+    ]);
+    const content = await contentRes.text();
+    ed.value = content;
+    savedContent = content;
+    clearDirty();
+    updateWordCount();
+  } catch (err) {
+    showToast('加载文件失败', 'error');
+  } finally {
+    ed.disabled = false;
+    ed.focus();
+    document.getElementById('editor-loading').classList.remove('show');
+  }
+
+  if (window.innerWidth <= 768) toggleSidebar();
+}
+
+function confirmLeave() {
+  if (!isDirty) return true;
+  // Use synchronous confirm here because we need to block navigation
+  return window.confirm('有未保存的修改，确定离开？');
+}
+
+function navigateToPath(p) {
+  saveTreeState();
+  window.location.href = `${API_BASE}/admin?path=${encodeURIComponent(p)}`;
+}
+
+// ===== DRAG AND DROP =====
+let dragged = null;
+function handleDragStart(e, p) { dragged = p; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; }
+function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function handleDrop(e, tf) {
+  e.preventDefault(); e.stopPropagation();
+  if (!dragged || dragged === tf) return;
+  if (dragged.endsWith('/') && (tf.endsWith('/') ? tf : tf + '/').startsWith(dragged)) {
+    showToast('不能移入自身或子目录', 'error'); return;
+  }
+  moveFile(dragged, tf.endsWith('/') ? tf : tf + '/');
+}
+
+// ===== API OPS =====
+async function moveFile(n, t) {
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_OP|move|${n}|${t}` });
+  if (r.status === 401) { logout(true); return; }
+  if (!r.ok) { showToast('移动失败', 'error'); return; }
+  await refreshTree();
+}
+
+function showNewFileModal(p) {
+  showModal('new-file-modal');
+  document.getElementById('new-file-parent').value = p || '';
+  document.getElementById('new-filename').value = '新建_' + Date.now() + '.txt';
+  setTimeout(() => document.getElementById('new-filename').select(), 100);
+}
+
+async function createNewFile() {
+  const f = document.getElementById('new-filename').value.trim();
+  const p = document.getElementById('new-file-parent').value;
+  if (!f) return showToast('文件名不能为空', 'error');
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_OP|new|${f}|${p}` });
+  if (r.status === 401) { logout(true); return; }
+  if (!r.ok) { showToast('创建失败', 'error'); return; }
+  hideModal('new-file-modal');
+  // Refresh tree, then auto-open new file
+  const newPath = p ? p + f : f;
+  await refreshTree();
+  // auto-select the new file
+  setTimeout(() => {
+    const el = document.querySelector(`.file-item[data-path="${CSS.escape(newPath)}"]`);
+    if (el) el.click();
+  }, 100);
+}
+
+function showNewFolderModal(p) {
+  showModal('new-folder-modal');
+  document.getElementById('new-folder-parent').value = p || '';
+  setTimeout(() => document.getElementById('new-foldername').focus(), 100);
+}
+
+async function createNewFolder() {
+  let f = document.getElementById('new-foldername').value.trim();
+  if (!f) return showToast('文件夹名不能为空', 'error');
+  if (!f.endsWith('/')) f += '/';
+  const p = document.getElementById('new-folder-parent').value;
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_OP|newfolder|${f}|${p}` });
+  if (r.status === 401) { logout(true); return; }
+  if (!r.ok) { showToast('创建失败', 'error'); return; }
+  hideModal('new-folder-modal');
+  await refreshTree();
+  showToast('文件夹已创建', 'success');
+}
+
+function showRenameModal(o) {
+  showModal('rename-modal');
+  document.getElementById('rename-old').value = o;
+  document.getElementById('rename-new').value = o;
+  setTimeout(() => document.getElementById('rename-new').select(), 100);
+}
+
+async function doRename() {
+  const o = document.getElementById('rename-old').value, n = document.getElementById('rename-new').value.trim();
+  if (!n || n === o) return showToast('名称无效', 'error');
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_OP|rename|${o}|${n}` });
+  if (r.status === 401) { logout(true); return; }
+  if (!r.ok) { showToast('重命名失败', 'error'); return; }
+  hideModal('rename-modal');
+  // Update currentFile ref if renamed
+  if (currentFile === o) { currentFile = ''; document.getElementById('current-file').textContent = '未选择文件'; }
+  await refreshTree();
+  showToast('已重命名', 'success');
+}
+
+async function deleteFile(f) {
+  const isDir = f.endsWith('/');
+  const confirmed = await showConfirm(
+    isDir ? '⚠️ 删除文件夹' : '⚠️ 删除文件',
+    isDir ? `确定删除文件夹「${f}」及其所有内容？` : `确定删除文件「${f}」？`,
+    '此操作不可撤销。'
+  );
+  if (!confirmed) return;
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_OP|delete|${f}` });
+  if (r.status === 401) { logout(true); return; }
+  if (!r.ok) { showToast('删除失败', 'error'); return; }
+  if (currentFile === f || (isDir && currentFile.startsWith(f))) {
+    currentFile = ''; currentFolder = '';
+    document.getElementById('editor-container').style.display = 'none';
+    document.getElementById('empty-state').style.display = '';
+  }
+  await refreshTree();
+  showToast(isDir ? '文件夹已删除' : '文件已删除', 'success');
+}
+
+// ===== SAVE =====
+async function saveInternal() {
+  const ed = document.getElementById('editor');
+  const h = { 'X-File-Name': encodeURIComponent(currentFile), 'Content-Type': 'text/plain;charset=utf-8' };
+  if (_currentFileToken) h['X-File-Token'] = encodeURIComponent(_currentFileToken);
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', headers: h, body: ed.value });
+  if (r.status === 401) { logout(true); throw new Error('Unauthorized'); }
+  if (!r.ok) throw new Error(await r.text());
+  clearDirty();
+}
+
+async function save() {
+  if (!currentFile || currentFile.endsWith('/')) return;
+  const btn = document.getElementById('save-btn');
+  const st = document.getElementById('status');
+  btn.disabled = true;
+  st.className = 'saving'; st.textContent = '保存中…';
+  try {
+    await saveInternal();
+    st.className = 'ok'; st.textContent = '✓ 已保存';
+    const now = new Date();
+    lastSavedAt = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('autosave-status').textContent = '上次保存于 ' + lastSavedAt;
+    setTimeout(() => { st.className = ''; st.textContent = ''; }, 2000);
+  } catch (e) {
+    st.className = 'err'; st.textContent = '✗ 保存失败';
+    showToast('保存失败：' + (e.message || '未知错误'), 'error', null, 5000);
+    setTimeout(() => { st.className = ''; st.textContent = ''; }, 4000);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ===== SHARE =====
+async function gen() {
+  if (!currentFile || currentFile.endsWith('/')) return showToast('请先选择一个文件', 'warning');
+  const c = document.getElementById('customToken').value.trim();
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_TOKEN|${currentFile}|${c}` });
+  if (r.status === 401) { logout(true); return; }
+  const t = await r.text(); _currentFileToken = t;
+  const ef = currentFile.split('/').map(encodeURIComponent).join('/');
+  const url = `${API_BASE}/sub/${t}/${ef}`;
+  document.getElementById('share-url').value = url;
+  document.getElementById('share-link-box').style.display = 'block';
+  document.getElementById('qr-container').innerHTML = '';
+  new QRCode(document.getElementById('qr-container'), { text: url, width: 140, height: 140, colorDark: '#166534', colorLight: '#ffffff' });
+}
+
+async function revokeToken() {
+  if (!currentFile) return;
+  const confirmed = await showConfirm('撤销 Token', `撤销后当前分享链接将失效，可重新生成新链接。确定撤销吗？`, '', '确认撤销', false);
+  if (!confirmed) return;
+  // Generate new token to replace old one (effectively revokes the old URL)
+  await gen();
+  showToast('Token 已更新，旧链接已失效', 'success');
+}
+
+function copyShareUrl(input) {
+  input.select();
+  try { document.execCommand('copy'); } catch (e) { navigator.clipboard && navigator.clipboard.writeText(input.value); }
+  input.classList.remove('copy-flash');
+  void input.offsetWidth;
+  input.classList.add('copy-flash');
+  showToast('链接已复制', 'success');
+}
+
+async function showViewTokenModal(f) {
+  document.getElementById('token-file-info').textContent = '📄 ' + f;
+  const r = await fetch(`${API_BASE}/admin`, { method: 'POST', body: `GET_TOKEN|${f}` });
+  if (r.status === 401) { logout(true); return; }
+  const t = await r.text();
+  if (t === '该文件未生成Token') {
+    document.getElementById('view-token').value = '未生成';
+    document.getElementById('view-url').value = '请先生成 Token';
+  } else {
+    document.getElementById('view-token').value = t;
+    const ef = f.split('/').map(encodeURIComponent).join('/');
+    document.getElementById('view-url').value = `${API_BASE}/sub/${t}/${ef}`;
+  }
+  showModal('view-token-modal');
+}
+
+function copyToClipboard(id) {
+  const i = document.getElementById(id); i.select();
+  try { document.execCommand('copy'); } catch (e) { navigator.clipboard && navigator.clipboard.writeText(i.value); }
+  showToast('已复制到剪贴板', 'success');
+  hideModal('view-token-modal');
+}
+
+// ===== SHARE PANEL TOGGLE =====
+function toggleSharePanel() {
+  const body = document.getElementById('share-panel-body');
+  const caret = document.getElementById('share-panel-caret');
+  const isOpen = body.classList.toggle('open');
+  caret.classList.toggle('open', isOpen);
+}
+
+// ===== PARTIAL TREE REFRESH (no full page reload) =====
+async function refreshTree() {
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=get_tree`);
+    if (!res.ok) return;
+    allFileList = await res.json();
+    const searchVal = document.getElementById('tree-search').value.trim().toLowerCase();
+    const tree = buildTree(allFileList);
+    document.getElementById('tree-root').innerHTML = renderTree(tree, 0, searchVal || null);
+    if (searchVal) {
+      document.querySelectorAll('.tree-list.nested').forEach(ul => ul.style.display = 'block');
+      document.querySelectorAll('.caret').forEach(c => c.classList.add('expanded'));
+    } else {
+      restoreTreeState();
+    }
+    // re-mark active
+    if (currentFile) {
+      document.querySelectorAll(`.file-item[data-path="${CSS.escape(currentFile)}"]`).forEach(el => el.classList.add('active'));
+    }
+  } catch (e) {
+    console.error('refreshTree failed', e);
+  }
+}
+
+// ===== TREE STATE PERSISTENCE =====
+function saveTreeState() {
+  const exp = [];
+  document.querySelectorAll('.folder-item').forEach(i => {
+    const u = i.querySelector('ul.nested');
+    if (u && u.style.display !== 'none') exp.push(i.dataset.path);
+  });
+  sessionStorage.setItem('treeExp', JSON.stringify(exp));
+  sessionStorage.setItem('treeSel', currentFile);
+  sessionStorage.setItem('treeFolder', currentFolder);
+}
+
+function restoreTreeState() {
+  try {
+    JSON.parse(sessionStorage.getItem('treeExp') || '[]').forEach(p => {
+      document.querySelectorAll('.folder-item').forEach(i => {
+        if (i.dataset.path === p) {
+          const u = i.querySelector('ul.nested'), c = i.querySelector('.caret');
+          if (u) { u.style.display = 'block'; c && c.classList.add('expanded'); }
+        }
+      });
+    });
+  } catch (e) {}
+}
+
+// ===== LOGIN / INIT =====
+async function doLogin() {
+  const uuid = document.getElementById('admin-uuid-input').value.trim();
+  if (!uuid) return;
+  try {
+    const res = await fetch(`${API_BASE}/admin`, { method: 'POST', body: 'LOGIN|' + uuid });
+    if (res.ok) location.reload();
+    else {
+      const e = document.getElementById('login-error'); e.style.display = 'block';
+      setTimeout(() => e.style.display = 'none', 3000);
+    }
+  } catch (e) { showToast('登录失败，请检查网络', 'error'); }
+}
+
+function logout(force = false) {
+  if (!force && !confirmLeave()) return;
+  fetch(`${API_BASE}/admin`, { method: 'POST', body: 'LOGOUT' }).finally(() => location.reload());
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  applyFontSize();
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=get_tree`);
+    if (res.ok) {
+      isLoggedIn = true;
+      allFileList = await res.json();
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('top-nav').style.display = 'flex';
+      document.getElementById('main-container').style.display = 'flex';
+      const tree = buildTree(allFileList);
+      document.getElementById('tree-root').innerHTML = renderTree(tree, 0, null);
+      restoreTreeState();
+
+      // Auto-reopen last file
+      const lastFile = sessionStorage.getItem('treeSel');
+      const lastFolder = sessionStorage.getItem('treeFolder') || '';
+      if (lastFile && !lastFile.endsWith('/')) {
+        const el = document.querySelector(`.file-item[data-path="${CSS.escape(lastFile)}"]`);
+        if (el) el.click();
+      }
+    } else {
+      document.getElementById('login-overlay').style.display = 'flex';
+      document.getElementById('admin-uuid-input').focus();
+    }
+  } catch (e) {
+    document.getElementById('login-overlay').style.display = 'flex';
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (isLoggedIn && (e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (currentFile && !currentFile.endsWith('/')) save();
+    // silently ignore if no file selected
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) document.getElementById('sidebar-backdrop').classList.remove('active');
+});
+</script>
+
+
+</body></html>
