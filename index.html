@@ -101,8 +101,8 @@ body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",
 /* ===== CONTENT AREA ===== */
 #content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);position:relative;}
 #editor-container{flex:1;display:flex;flex-direction:column;padding:24px;overflow-y:auto;gap:16px;}
-#unsaved-bar{display:none;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 16px;font-size:13px;color:#92400e;align-items:center;gap:8px;flex-shrink:0;}
-#unsaved-bar.show{display:flex;}
+#unsaved-bar{visibility:hidden;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 16px;font-size:13px;color:#92400e;align-items:center;gap:8px;flex-shrink:0;display:flex;}
+#unsaved-bar.show{visibility:visible;}
 #breadcrumb{display:flex;align-items:center;gap:8px;padding:0 0 8px 0;font-size:14px;color:var(--text-secondary);border-bottom:1px solid var(--border);margin-bottom:0;overflow-x:auto;white-space:nowrap;flex-shrink:0;}
 #breadcrumb .crumb-item{display:flex;align-items:center;gap:8px;}
 #breadcrumb .crumb-item:not(:last-child)::after{content:'/';color:#cbd5e1;}
