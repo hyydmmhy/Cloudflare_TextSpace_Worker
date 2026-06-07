@@ -390,7 +390,7 @@ export default {
         return text("已登出", 200, {
           "Set-Cookie": `admin_token=;Path=/;HttpOnly;SameSite=Lax;Secure;Max-Age=0`,
         });
-      const adminToken = getCookie(request, "admin_token");
+      const adminToken = getCookie(request, "admin_token") || request.headers.get("X-Admin-Token") || "";
       if (adminToken !== ADMIN_UUID) return text("未登录", 401);
       if (url.searchParams.get("action") === "get_tree")
         return json(await getFileList(env));
