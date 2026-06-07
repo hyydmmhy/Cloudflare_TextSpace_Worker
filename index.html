@@ -100,7 +100,7 @@ body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",
 
 /* ===== CONTENT AREA ===== */
 #content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);position:relative;}
-#editor-container{flex:1;display:flex;flex-direction:column;padding:24px;overflow-y:auto;gap:16px;}
+#editor-container{flex:1;display:flex;flex-direction:column;padding:24px;overflow-y:auto;gap:16px;min-height:0;}
 #unsaved-bar{visibility:hidden;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:10px 16px;font-size:13px;color:#92400e;align-items:center;gap:8px;flex-shrink:0;display:flex;}
 #unsaved-bar.show{visibility:visible;}
 #breadcrumb{display:flex;align-items:center;gap:8px;padding:0 0 8px 0;font-size:14px;color:var(--text-secondary);border-bottom:1px solid var(--border);margin-bottom:0;overflow-x:auto;white-space:nowrap;flex-shrink:0;}
@@ -130,7 +130,7 @@ body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",
 #current-file{color:var(--text-secondary);font-size:13px;font-weight:500;padding:6px 12px;background:#f1f5f9;border-radius:20px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* ===== EDITOR ===== */
-#editor-wrap{flex:1;position:relative;min-height:200px;height:300px;}
+#editor-wrap{flex:0 0 300px;position:relative;min-height:200px;}
 #editor{width:100%;height:100%;border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;line-height:1.7;resize:none;outline:none;transition:all .2s;background:var(--card-bg);color:var(--text);}
 #editor:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 #editor:disabled{background:#f8fafc;color:var(--text-secondary);cursor:not-allowed;}
