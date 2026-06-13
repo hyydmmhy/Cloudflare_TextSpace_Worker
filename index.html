@@ -1029,6 +1029,7 @@ function toggleSharePanel() {
 // ===== PARTIAL TREE REFRESH (no full page reload) =====
 async function refreshTree() {
   try {
+    saveTreeState();
     const res = await adminFetch(`${API_BASE}/admin?action=get_tree`);
     if (!res.ok) return;
     allFileList = await res.json();
