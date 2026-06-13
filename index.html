@@ -240,6 +240,7 @@ body{height:auto;min-height:100vh;min-height:-webkit-fill-available;overflow:aut
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 <script>
@@ -265,7 +266,10 @@ if (!sessionStorage.getItem('admin_token')) {
       </div>
     </div>
     <div id="login-error" style="color:#dc2626;font-size:13px;margin-top:8px;visibility:hidden;">密码验证失败，请重试</div>
-    <button type="button" id="login-btn" onclick="doLogin()" ontouchend="event.preventDefault();doLogin();" style="width:100%;margin-top:24px;padding:14px 24px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:600;transition:opacity .2s;">验证登录</button>
+    <div style="margin-top:16px;display:flex;justify-content:center;">
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAADVa_T8KeqACrd1L" data-theme="light"></div>
+    </div>
+    <button type="button" id="login-btn" onclick="doLogin()" ontouchend="event.preventDefault();doLogin();" style="width:100%;margin-top:16px;padding:14px 24px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:600;transition:opacity .2s;">验证登录</button>
   </div>
 </div>
 
@@ -1080,10 +1084,12 @@ function restoreTreeState() {
 async function doLogin() {
   const uuid = document.getElementById('admin-uuid-input').value.trim();
   if (!uuid) return;
+  const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value || '';
+  if (!turnstileToken) { showToast('请先完成人机验证', 'warning'); return; }
   const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.style.opacity = '0.6'; btn.textContent = '验证中…';
   try {
-    const res = await fetch(`${API_BASE}/admin`, { method: 'POST', body: 'LOGIN|' + uuid, headers: { 'X-Admin-Token': uuid } });
+    const res = await fetch(`${API_BASE}/admin`, { method: 'POST', body: 'LOGIN|' + uuid + '|' + turnstileToken, headers: { 'X-Admin-Token': uuid } });
     if (res.ok) {
       btn.textContent = '✓ 登录成功';  btn.style.background = '#16a34a';
       sessionStorage.setItem('admin_token', uuid);

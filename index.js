@@ -362,7 +362,25 @@ export default {
       }
       const body = request.method === "POST" ? await request.text() : "";
       if (body.startsWith("LOGIN|")) {
-        const inp = body.split("|")[1];
+        const parts = body.split("|");
+        const inp = parts[1];
+        const turnstileToken = parts[2] || "";
+        if (env.TURNSTILE_SECRET) {
+          const tv = await fetch(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                secret: env.TURNSTILE_SECRET,
+                response: turnstileToken,
+                remoteip: request.headers.get("CF-Connecting-IP"),
+              }),
+            },
+          );
+          const td = await tv.json();
+          if (!td.success) return text("人机验证失败，请刷新重试", 403);
+        }
         if (inp === ADMIN_UUID)
           return text("登录成功", 200, {
             "Set-Cookie": `admin_token=${ADMIN_UUID};Path=/;HttpOnly;SameSite=Lax;Secure;Max-Age=${ADMIN_COOKIE_MAX_AGE}`,
