@@ -6,7 +6,7 @@
 //仅供学习使用，勿用于非法
 //基于GPLv3协议的开源特性
 
-const DEFAULT_FRONTEND_URL = "https://cf-text-disk-ui.pages.dev";
+import HTML from './index.html';
 const ADMIN_COOKIE_MAX_AGE = 3600; //默认1个小时，可按需修改
 const KV_TTL = 60 * 60 * 24 * 7;
 const CACHE_TTL = 60 * 60 * 24 * 365;
@@ -309,28 +309,13 @@ async function createNewFolder(env, fullPath) {
     .bind(fullPath)
     .run();
 }
-async function proxyFrontend(frontendUrl, request, ctx) {
-  const cacheKey = new URL(frontendUrl);
-  const cached = await caches.default.match(cacheKey);
-  if (cached)
-    return new Response(cached.body, {
-      headers: {
-        ...cached.headers,
-        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
-        "Content-Type": "text/html;charset=utf-8",
-      },
-    });
-  const res = await fetch(frontendUrl, { cf: { cacheEverything: true } });
-  const newRes = new Response(res.body, {
-    status: res.status,
+function serveHTML() {
+  return new Response(HTML, {
     headers: {
-      ...res.headers,
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       "Content-Type": "text/html;charset=utf-8",
+      "Cache-Control": "public, max-age=3600",
     },
   });
-  ctx.waitUntil(caches.default.put(cacheKey, newRes.clone()));
-  return newRes;
 }
 export default {
   async fetch(request, env, ctx) {
@@ -374,8 +359,7 @@ export default {
         !url.searchParams.has("file") &&
         !request.headers.get("X-File-Name")
       ) {
-        const frontendUrl = env.FRONTEND_URL || DEFAULT_FRONTEND_URL;
-        return proxyFrontend(frontendUrl, request, ctx);
+        return serveHTML();
       }
       const body = request.method === "POST" ? await request.text() : "";
       if (body.startsWith("LOGIN|")) {
@@ -510,8 +494,7 @@ export default {
           ),
         );
       }
-      const frontendUrl = env.FRONTEND_URL || DEFAULT_FRONTEND_URL;
-      return proxyFrontend(frontendUrl, request, ctx);
+      return serveHTML();
     }
     return text("Not Found", 404);
   },
