@@ -8,7 +8,7 @@ globs = ["**/*.html"]
 
 [[d1_databases]]
 binding = "DB"
-database_name = "text-space-db"
+database_name = "textdisk"
 database_id = "9150a6f9-97a0-4c31-861b-e330fcc6ad24"
 
 [[kv_namespaces]]
