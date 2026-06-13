@@ -982,11 +982,12 @@ async function gen() {
     if (r.status === 401) { logout(true); return; }
     _currentFileToken = await r.text();
   }
-  const url = `${API_BASE}/${currentFile}`;
-  document.getElementById('share-url').value = url;
+  const displayUrl = `${API_BASE}/${currentFile}`;
+  const qrUrl = `${API_BASE}/${currentFile.split('/').map(s => encodeURIComponent(s)).join('/')}`;
+  document.getElementById('share-url').value = displayUrl;
   document.getElementById('share-link-box').style.display = 'block';
   document.getElementById('qr-container').innerHTML = '';
-  new QRCode(document.getElementById('qr-container'), { text: url, width: 140, height: 140, colorDark: '#166534', colorLight: '#ffffff' });
+  new QRCode(document.getElementById('qr-container'), { text: qrUrl, width: 140, height: 140, colorDark: '#166534', colorLight: '#ffffff' });
 }
 
 async function revokeToken() {
