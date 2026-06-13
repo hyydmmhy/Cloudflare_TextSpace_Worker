@@ -348,7 +348,7 @@ if (!sessionStorage.getItem('admin_token')) {
             <div id="share-panel-header-left"><span>🔑</span><span>分享设置</span></div>
           </div>
           <div id="share-panel-body">
-            <p id="token-note">Token 永久有效，可随时重新生成替换旧链接。</p>
+            <p id="token-note">分享链接为文件直接路径，任何人可通过链接访问。可选：填入自定义 Token 后点击生成，同时保留 /sub/token/路径 方式访问。</p>
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
               <input type="text" id="customToken" placeholder="自定义 Token（留空自动生成）" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;background:#f8fafc;">
               <button class="btn-primary" onclick="gen()" style="white-space:nowrap;justify-content:center;">生成 / 更新</button>
@@ -356,7 +356,6 @@ if (!sessionStorage.getItem('admin_token')) {
             <div id="share-link-box">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
                 <div style="font-size:13px;color:#166534;font-weight:600;">✓ 链接已生成</div>
-                <button onclick="revokeToken()" style="font-size:12px;padding:4px 10px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;border-radius:6px;cursor:pointer;">撤销</button>
               </div>
               <input type="text" id="share-url" readonly="" onclick="copyShareUrl(this)">
               <div style="font-size:12px;color:#16a34a;margin-top:4px;">点击链接框即可复制</div>
@@ -441,7 +440,6 @@ if (!sessionStorage.getItem('admin_token')) {
     <div class="modal-header"><h3>🔗 文件分享信息</h3></div>
     <div class="modal-body">
       <div id="token-file-info" style="padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:20px;font-size:14px;font-weight:600;color:var(--text);border:1px solid var(--border);"></div>
-      <div class="form-group"><label>Token</label><input type="text" id="view-token" readonly=""></div>
       <div class="form-group"><label>访问链接</label><input type="text" id="view-url" readonly="" onclick="this.select()"></div>
       <button class="btn btn-primary btn-block" onclick="copyToClipboard(&#39;view-url&#39;)">📋 复制分享链接</button>
     </div>
@@ -979,11 +977,12 @@ async function save() {
 async function gen() {
   if (!currentFile || currentFile.endsWith('/')) return showToast('请先选择一个文件', 'warning');
   const c = document.getElementById('customToken').value.trim();
-  const r = await adminFetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_TOKEN|${currentFile}|${c}` });
-  if (r.status === 401) { logout(true); return; }
-  const t = await r.text(); _currentFileToken = t;
-  const ef = currentFile.split('/').map(encodeURIComponent).join('/');
-  const url = `${API_BASE}/sub/${t}/${ef}`;
+  if (c) {
+    const r = await adminFetch(`${API_BASE}/admin`, { method: 'POST', body: `FILE_TOKEN|${currentFile}|${c}` });
+    if (r.status === 401) { logout(true); return; }
+    _currentFileToken = await r.text();
+  }
+  const url = `${API_BASE}/${currentFile}`;
   document.getElementById('share-url').value = url;
   document.getElementById('share-link-box').style.display = 'block';
   document.getElementById('qr-container').innerHTML = '';
@@ -1008,19 +1007,9 @@ function copyShareUrl(input) {
   showToast('链接已复制', 'success');
 }
 
-async function showViewTokenModal(f) {
+function showViewTokenModal(f) {
   document.getElementById('token-file-info').textContent = '📄 ' + f;
-  const r = await adminFetch(`${API_BASE}/admin`, { method: 'POST', body: `GET_TOKEN|${f}` });
-  if (r.status === 401) { logout(true); return; }
-  const t = await r.text();
-  if (t === '该文件未生成Token') {
-    document.getElementById('view-token').value = '未生成';
-    document.getElementById('view-url').value = '请先生成 Token';
-  } else {
-    document.getElementById('view-token').value = t;
-    const ef = f.split('/').map(encodeURIComponent).join('/');
-    document.getElementById('view-url').value = `${API_BASE}/sub/${t}/${ef}`;
-  }
+  document.getElementById('view-url').value = `${API_BASE}/${f}`;
   showModal('view-token-modal');
 }
 

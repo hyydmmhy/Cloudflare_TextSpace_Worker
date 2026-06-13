@@ -496,6 +496,15 @@ export default {
       }
       return serveHTML();
     }
+    // Public file access by path
+    const decodedFile = decodeURIComponent(pathname);
+    const pubRow = await env.DB.prepare(
+      "SELECT content, is_folder FROM files WHERE path = ?",
+    )
+      .bind(decodedFile)
+      .all();
+    if (pubRow.results.length && !pubRow.results[0].is_folder)
+      return text(pubRow.results[0].content || "");
     return text("Not Found", 404);
   },
 };
