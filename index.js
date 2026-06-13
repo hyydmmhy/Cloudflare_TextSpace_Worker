@@ -2,8 +2,7 @@
 // 环境变量：ADMIN_UUID（必填）
 // D1 绑定：DB（必填）
 // KV 绑定：SHARE_KV（强烈推荐，用于加速访客访问）
-//Youtube频道：好软推荐
-//仅供学习使用，勿用于非法
+// 仅供学习使用，勿用于非法
 //基于GPLv3协议的开源特性
 
 import HTML from './index.html';
