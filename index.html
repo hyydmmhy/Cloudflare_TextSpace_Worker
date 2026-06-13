@@ -348,10 +348,10 @@ if (!sessionStorage.getItem('admin_token')) {
             <div id="share-panel-header-left"><span>🔑</span><span>分享设置</span></div>
           </div>
           <div id="share-panel-body">
-            <p id="token-note">分享链接为文件直接路径，任何人可通过链接访问。可选：填入自定义 Token 后点击生成，同时保留 /sub/token/路径 方式访问。</p>
+            <p id="token-note">分享链接为文件直接路径，任何人可通过链接访问。</p>
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
               <input type="text" id="customToken" placeholder="自定义 Token（留空自动生成）" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none;background:#f8fafc;">
-              <button class="btn-primary" onclick="gen()" style="white-space:nowrap;justify-content:center;">生成 / 更新</button>
+              <button class="btn-primary" onclick="gen()" style="white-space:nowrap;justify-content:center;">生成</button>
             </div>
             <div id="share-link-box">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
