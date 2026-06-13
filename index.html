@@ -265,12 +265,12 @@ if (!sessionStorage.getItem('admin_token')) {
         <button type="button" onclick="togglePwd()" id="pwd-eye-btn" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:none;cursor:pointer;font-size:18px;color:#9ca3af;padding:0;line-height:1;">👁️</button>
       </div>
     </div>
-    <div id="login-error" style="color:#dc2626;font-size:13px;margin-top:8px;visibility:hidden;">密码验证失败，请重试</div>
-    <div style="margin-top:16px;display:flex;justify-content:center;">
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAADVa_T8KeqACrd1L" data-theme="light"></div>
-    </div>
+    <div id="login-error" style="color:#dc2626;font-size:13px;margin-top:8px;visibility:hidden;"></div>
     <button type="button" id="login-btn" onclick="doLogin()" ontouchend="event.preventDefault();doLogin();" style="width:100%;margin-top:16px;padding:14px 24px;background:#2563eb;color:#fff;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:600;transition:opacity .2s;">验证登录</button>
   </div>
+</div>
+<div style="position:fixed;bottom:24px;right:24px;z-index:9999;" id="turnstile-float">
+  <div class="cf-turnstile" data-sitekey="0x4AAAAAADVa_T8KeqACrd1L" data-theme="light" data-callback="onTurnstileSuccess" data-expired-callback="onTurnstileExpired"></div>
 </div>
 
 <!-- ===== TOP NAV ===== -->
@@ -1081,11 +1081,20 @@ function restoreTreeState() {
 }
 
 // ===== LOGIN / INIT =====
+let _turnstileToken = '';
+function onTurnstileSuccess(token) { _turnstileToken = token; }
+function onTurnstileExpired() { _turnstileToken = ''; }
 async function doLogin() {
   const uuid = document.getElementById('admin-uuid-input').value.trim();
   if (!uuid) return;
-  const turnstileToken = document.querySelector('[name="cf-turnstile-response"]')?.value || '';
-  if (!turnstileToken) { showToast('请先完成人机验证', 'warning'); return; }
+  const turnstileToken = _turnstileToken;
+  if (!turnstileToken) {
+    const e = document.getElementById('login-error');
+    e.textContent = '请先完成右下角人机验证';
+    e.style.visibility = 'visible';
+    setTimeout(() => { e.style.visibility = 'hidden'; }, 3000);
+    return;
+  }
   const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.style.opacity = '0.6'; btn.textContent = '验证中…';
   try {
@@ -1107,7 +1116,9 @@ async function doLogin() {
       }, 400);
     } else {
       btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '验证登录';
-      const e = document.getElementById('login-error'); e.style.visibility = 'visible';
+      const e = document.getElementById('login-error');
+      e.textContent = '密码验证失败，请重试';
+      e.style.visibility = 'visible';
       setTimeout(() => e.style.visibility = 'hidden', 3000);
     }
   } catch (e) {
