@@ -5,3 +5,12 @@ compatibility_date = "2024-09-23"
 [[rules]]
 type = "Text"
 globs = ["**/*.html"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "text-space-db"
+database_id = "9150a6f9-97a0-4c31-861b-e330fcc6ad24"
+
+[[kv_namespaces]]
+binding = "SHARE_KV"
+id = "9fa9962896bc4a92a65e78ed6255c77a"
