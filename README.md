@@ -1,7 +1,6 @@
 # Cloudflare Text Disk
 
 基于 Cloudflare Workers + D1 + KV 的轻量级纯文本云盘。树形目录、文件分享、多级缓存，零服务器成本。
-
 ## 部署
 
 1. Fork 本仓库
